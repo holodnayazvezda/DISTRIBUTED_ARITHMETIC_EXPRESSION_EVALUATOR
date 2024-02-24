@@ -1,0 +1,60 @@
+version: "3"
+
+services:
+  agent:
+    container_name: agent
+    restart: always
+    build: .
+    networks:
+      - calcNetworks
+    ports:
+      - 3000:3000
+    command: [ "go", "run", "./starter/agent_calculator/main.go" ]
+
+
+
+  orchestrator:
+    container_name: orchestrator
+    restart: always
+    build: .
+    networks:
+      - calcNetworks
+    ports:
+      - 4000:4000
+      - 8080:8080
+    command: [ "go", "run", "./starter/orchestrator_server/main.go" ]
+
+  db:
+    image: postgres
+    restart: always
+    depends_on:
+      - orchestrator
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - 5432:5432
+    networks:
+      - calcNetworks
+
+  adminer:
+    image: adminer
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - 9009:8080
+    volumes:
+      - adminer:/adminer/volumes
+    networks:
+      - calcNetworks
+    environment:
+      - TZ=Europe/Moscow
+
+volumes:
+  db:
+  adminer:
+
+networks:
+  calcNetworks:
+    driver: bridge
